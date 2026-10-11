@@ -15,6 +15,13 @@
       "when": 1791756743928,
       "tag": "0001_fantastic_guardsmen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1791760028901,
+      "tag": "0002_left_gorgon",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-export const renderViews = ["front", "side", "rear", "portrait", "pose"] as const;
+export const renderViews = ["front", "side", "rear", "three-quarter"] as const;
 export type RenderView = (typeof renderViews)[number];
+
+export const clothingMaterials = ["cotton", "silk", "satin", "denim", "leather", "latex"] as const;
+export const clothingStyles = ["tailored", "casual", "editorial", "formal-dress", "swimwear", "lingerie"] as const;
 
 export const choiceSets = {
   bodyBuild: ["slender", "athletic", "curvy", "strong", "soft"],
@@ -122,8 +125,28 @@ export const characterSettingsSchema = z
     lighting: z.enum(choiceSets.lighting),
     cameraAngle: z.enum(choiceSets.cameraAngle),
     sceneBackground: z.enum(choiceSets.sceneBackground),
-    outputBackground: z.enum(choiceSets.outputBackground),
-    identitySeed: z.string().trim().min(8).max(100),
+  outputBackground: z.enum(choiceSets.outputBackground),
+  identitySeed: z.string().trim().min(8).max(100),
+  bodyHeight: z.number().min(0.82).max(1.18).default(1),
+  shoulderWidth: z.number().min(0.75).max(1.3).default(1),
+  chestWidth: z.number().min(0.72).max(1.32).default(1),
+  waistWidth: z.number().min(0.7).max(1.3).default(1),
+  hipWidth: z.number().min(0.72).max(1.35).default(1),
+  armLength: z.number().min(0.8).max(1.2).default(1),
+  legLength: z.number().min(0.8).max(1.2).default(1),
+  faceWidth: z.number().min(0.78).max(1.22).default(1),
+  jawWidth: z.number().min(0.7).max(1.25).default(1),
+  eyeSize: z.number().min(0.75).max(1.3).default(1),
+  eyeSpacing: z.number().min(0.8).max(1.25).default(1),
+  noseSize: z.number().min(0.75).max(1.25).default(1),
+  hairLength: z.number().min(0.15).max(1).default(0.62),
+  hairVolume: z.number().min(0.65).max(1.4).default(1),
+  clothingStyle: z.enum(clothingStyles).default("editorial"),
+  clothingMaterial: z.enum(clothingMaterials).default("silk"),
+  skinHex: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#C99378"),
+  hairHex: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#382720"),
+  clothingHex: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#393452"),
+  adultMode: z.boolean().default(false),
   })
   .strict();
 
@@ -144,6 +167,26 @@ export const defaultCharacterSettings: CharacterSettings = {
   sceneBackground: "studio-cyclorama",
   outputBackground: "studio",
   identitySeed: "figural-character-anchor",
+  bodyHeight: 1,
+  shoulderWidth: 1,
+  chestWidth: 1,
+  waistWidth: 1,
+  hipWidth: 1,
+  armLength: 1,
+  legLength: 1,
+  faceWidth: 1,
+  jawWidth: 1,
+  eyeSize: 1,
+  eyeSpacing: 1,
+  noseSize: 1,
+  hairLength: 0.62,
+  hairVolume: 1,
+  clothingStyle: "editorial",
+  clothingMaterial: "silk",
+  skinHex: "#C99378",
+  hairHex: "#382720",
+  clothingHex: "#393452",
+  adultMode: false,
 };
 
 export function parseCharacterSettings(value: unknown): CharacterSettings {
@@ -160,28 +203,13 @@ export const adultSafetyAttestationSchema = z.object({
 
 export type AdultSafetyAttestation = z.infer<typeof adultSafetyAttestationSchema>;
 
-export const referenceImageSchema = z.object({
-  b64Json: z.string().min(80).max(12_000_000).regex(/^[A-Za-z0-9+/]+={0,2}$/),
-  mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
-  fileName: z.string().trim().min(1).max(160).optional(),
-  attestation: z.object({
-    sourceShowsAnAuthorizedAdult: z.literal(true),
-    hasSourceRightsOrConsent: z.literal(true),
-    noMinorOrAmbiguousYouth: z.literal(true),
-    noSexualizedNonConsensualReplica: z.literal(true),
-  }),
-});
-
-export type ReferenceImageInput = z.infer<typeof referenceImageSchema>;
-
 export function readableView(view: RenderView) {
   return (
     {
       front: "Front",
       side: "Side",
       rear: "Rear",
-      portrait: "Portrait",
-      pose: "Pose",
+      "three-quarter": "Three-quarter",
     } as const
   )[view];
 }

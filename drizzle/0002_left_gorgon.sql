@@ -1,0 +1,1 @@
+ALTER TABLE `character_renders` MODIFY COLUMN `view` enum('front','side','rear','portrait','pose','three-quarter') NOT NULL;
