@@ -81,7 +81,7 @@ export const characterRenders = mysqlTable(
     id: varchar("id", { length: 64 }).primaryKey(),
     projectId: varchar("projectId", { length: 64 }).notNull(),
     ownerToken: varchar("ownerToken", { length: 180 }).notNull(),
-    view: mysqlEnum("view", ["front", "side", "rear", "portrait", "pose"]).notNull(),
+    view: mysqlEnum("view", ["front", "side", "rear", "portrait", "pose", "three-quarter"]).notNull(),
     status: mysqlEnum("status", ["queued", "rendering", "complete", "failed"]).default("queued").notNull(),
     sourceMode: mysqlEnum("sourceMode", ["none", "reference", "project-anchor"]).default("none").notNull(),
     imageUrl: text("imageUrl"),
