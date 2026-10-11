@@ -1,40 +1,38 @@
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Tabs } from "expo-router";
+import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Platform } from "react-native";
-import { useColors } from "@/hooks/use-colors";
 
 export default function TabLayout() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
-  const tabBarHeight = 56 + bottomPadding;
+  const bottomPadding = Platform.OS === "web" ? 10 : Math.max(insets.bottom, 8);
+  const tabBarHeight = 58 + bottomPadding;
+  const active = "#B7A3FF";
+  const muted = "#9B94B8";
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarActiveTintColor: active,
+        tabBarInactiveTintColor: muted,
         tabBarStyle: {
-          paddingTop: 8,
+          paddingTop: 7,
           paddingBottom: bottomPadding,
           height: tabBarHeight,
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          borderTopWidth: 0.5,
+          backgroundColor: "#121021",
+          borderTopColor: "#302B4B",
+          borderTopWidth: 1,
         },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Studio", tabBarIcon: ({ color }) => <MaterialIcons name="face-retouching-natural" size={24} color={color} /> }} />
+      <Tabs.Screen name="gallery" options={{ title: "Gallery", tabBarIcon: ({ color }) => <MaterialIcons name="collections" size={24} color={color} /> }} />
+      <Tabs.Screen name="safety" options={{ title: "Standard", tabBarIcon: ({ color }) => <MaterialIcons name="verified-user" size={24} color={color} /> }} />
     </Tabs>
   );
 }

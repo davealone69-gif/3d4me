@@ -1,143 +1,136 @@
-/**
- * Image generation helper using internal ImageService
- *
- * Example usage:
- *   const { url: imageUrl } = await generateImage({
- *     prompt: "A serene landscape with mountains"
- *   });
- *
- * For editing:
- *   const { url: imageUrl } = await generateImage({
- *     prompt: "Add a rainbow to this landscape",
- *     originalImages: [{
- *       url: "https://example.com/original.jpg",
- *       mimeType: "image/jpeg"
- *     }]
- *   });
- */
 import { storagePut } from "../storage";
+import { removeImageBackground } from "./backgroundRemoval";
 import { ENV } from "./env";
-
-// Default model for generated sites. "MODEL_GPT_IMAGE_2" is the forge images.v1
-// enum for GPT Image 2 (id: gpt-image-2). If omitted, forge falls back to Gemini 2.5 Flash.
-const DEFAULT_IMAGE_MODEL = "MODEL_GPT_IMAGE_2";
-const DEFAULT_IMAGE_QUALITY = "medium";
 
 export type GenerateImageOptions = {
   prompt: string;
-  originalImages?: Array<{
-    url?: string;
-    b64Json?: string;
-    mimeType?: string;
-  }>;
-  /** Forge image model enum, e.g. "MODEL_GPT_IMAGE_2". Defaults to GPT Image 2. */
-  model?: string;
-  /** Generation quality, e.g. "medium" | "high". Defaults to "medium" for GPT Image 2. */
-  quality?: string;
+  originalImages?: Array<{ url?: string; b64Json?: string; mimeType?: string }>;
+  storagePrefix: string;
+  requireTransparent?: boolean;
 };
 
-export type GenerateImageResponse = {
-  url?: string;
+export type GeneratedImageAsset = {
+  url: string;
+  key: string;
+  mimeType: string;
+  modelId: string;
+  transparentVerified: boolean;
 };
 
-export async function generateImage(options: GenerateImageOptions): Promise<GenerateImageResponse> {
-  if (!ENV.forgeApiUrl) {
-    throw new Error("BUILT_IN_FORGE_API_URL is not configured");
+type ImageModelInfo = { model?: string; id?: string };
+
+function platformConfig() {
+  if (!ENV.manusApiUrl || !ENV.manusApiKey) {
+    throw new Error("The configured Figural image service is unavailable.");
   }
-  if (!ENV.forgeApiKey) {
-    throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
+  return {
+    baseUrl: ENV.manusApiUrl.endsWith("/") ? ENV.manusApiUrl : `${ENV.manusApiUrl}/`,
+    key: ENV.manusApiKey,
+  };
+}
+
+function extensionForMime(mimeType: string) {
+  if (mimeType.includes("webp")) return "webp";
+  if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
+  return "png";
+}
+
+function hasVerifiedAlpha(buffer: Buffer, mimeType: string) {
+  if (mimeType.includes("png")) {
+    // PNG IHDR color types 4 and 6 carry alpha. Palette PNG transparency would also contain tRNS,
+    // but generated character art is expected to use true alpha pixels rather than a palette mask.
+    return buffer.length > 25 && buffer.subarray(1, 4).toString("ascii") === "PNG" && [4, 6].includes(buffer[25]);
   }
+  if (mimeType.includes("webp")) {
+    // VP8X uses alpha bit 4 in its feature flags.
+    return buffer.length > 21 && buffer.subarray(12, 16).toString("ascii") === "VP8X" && (buffer[20] & 0x10) !== 0;
+  }
+  return false;
+}
 
-  // Build the full URL by appending the service path to the base URL
-  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL("images.v1.ImageService/GenerateImage", baseUrl).toString();
-
-  const model = options.model ?? DEFAULT_IMAGE_MODEL;
-  const quality = options.quality ?? (model === DEFAULT_IMAGE_MODEL ? DEFAULT_IMAGE_QUALITY : undefined);
-
-  const response = await fetch(fullUrl, {
+async function listImageModels(): Promise<ImageModelInfo[]> {
+  const { baseUrl, key } = platformConfig();
+  const response = await fetch(new URL("images.v1.ImageService/ListModels", baseUrl), {
     method: "POST",
     headers: {
-      accept: "application/json",
-      "content-type": "application/json",
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
       "connect-protocol-version": "1",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+    },
+    body: "{}",
+  });
+  if (!response.ok) throw new Error(`Image-model discovery failed (${response.status}).`);
+  const body = (await response.json()) as { models?: ImageModelInfo[] };
+  return body.models ?? [];
+}
+
+async function resolvePhotorealisticModel(): Promise<{ model: string; id: string }> {
+  const models = await listImageModels();
+  const preferred = models.find((model) => model.id?.toLowerCase().includes("gpt-image")) ?? models[0];
+  if (!preferred?.model || !preferred.id) throw new Error("No usable image model is configured for this project.");
+  return { model: preferred.model, id: preferred.id };
+}
+
+async function resolveImageBytes(image: { b64Json?: string; url?: string; mimeType?: string }) {
+  if (image.b64Json) return Buffer.from(image.b64Json, "base64");
+  if (image.url) {
+    const response = await fetch(image.url);
+    if (!response.ok) throw new Error("The image service returned an unreadable result.");
+    return Buffer.from(await response.arrayBuffer());
+  }
+  throw new Error("The image service returned no image bytes.");
+}
+
+/**
+ * Sends a real server-side request to the configured project ImageService, then transfers the
+ * actual response bytes to managed storage. It never returns a placeholder result.
+ */
+export async function generateImage(options: GenerateImageOptions): Promise<GeneratedImageAsset> {
+  const { baseUrl, key } = platformConfig();
+  const model = await resolvePhotorealisticModel();
+  const response = await fetch(new URL("images.v1.ImageService/GenerateImage", baseUrl), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+      "connect-protocol-version": "1",
     },
     body: JSON.stringify({
       prompt: options.prompt,
-      original_images: options.originalImages || [],
-      model,
-      ...(quality ? { quality } : {}),
+      originalImages: options.originalImages ?? [],
+      model: model.model,
     }),
   });
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
-    throw new Error(
-      `Image generation request failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`,
-    );
+    throw new Error(`Image generation failed (${response.status})${detail ? `: ${detail.slice(0, 500)}` : ""}`);
   }
 
-  const result = (await response.json()) as {
-    image: {
-      b64Json: string;
-      mimeType: string;
-    };
+  const body = (await response.json()) as {
+    image?: { b64Json?: string; url?: string; mimeType?: string };
+    error?: { message?: string };
   };
-  const base64Data = result.image.b64Json;
-  const buffer = Buffer.from(base64Data, "base64");
+  if (body.error?.message) throw new Error(body.error.message);
+  if (!body.image) throw new Error("Image generation completed without an image result.");
 
-  // Save to S3
-  const { url } = await storagePut(`generated/${Date.now()}.png`, buffer, result.image.mimeType);
-  return {
-    url,
-  };
-}
+  let mimeType = body.image.mimeType || "image/png";
+  let bytes = await resolveImageBytes(body.image);
+  if (bytes.length === 0) throw new Error("Image generation completed with an empty asset.");
 
-export type ImageModelInfo = {
-  /** Forge model enum, e.g. "MODEL_GPT_IMAGE_2". Pass into generateImage({ model }). */
-  model?: string;
-  /** Stable model id, e.g. "gpt-image-2". */
-  id?: string;
-};
-
-export type ListImageModelsResponse = {
-  models: ImageModelInfo[];
-};
-
-/**
- * List the image models the internal ImageService currently supports.
- * Feed a returned `model` value into generateImage({ model }).
- */
-export async function listImageModels(): Promise<ListImageModelsResponse> {
-  if (!ENV.forgeApiUrl) {
-    throw new Error("BUILT_IN_FORGE_API_URL is not configured");
+  if (options.requireTransparent && !hasVerifiedAlpha(bytes, mimeType)) {
+    bytes = await removeImageBackground(bytes, mimeType);
+    mimeType = "image/png";
   }
-  if (!ENV.forgeApiKey) {
-    throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
+  const transparentVerified = hasVerifiedAlpha(bytes, mimeType);
+  if (options.requireTransparent && !transparentVerified) {
+    throw new Error("The local alpha-matting stage did not produce a verified transparent PNG.");
   }
+  const { key: storageKey, url } = await storagePut(
+    `${options.storagePrefix.replace(/\/+$/, "")}/render.${extensionForMime(mimeType)}`,
+    bytes,
+    mimeType,
+  );
 
-  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL("images.v1.ImageService/ListModels", baseUrl).toString();
-
-  const response = await fetch(fullUrl, {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "connect-protocol-version": "1",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: "{}",
-  });
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(
-      `List image models failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`,
-    );
-  }
-
-  const result = (await response.json()) as { models?: ImageModelInfo[] };
-  return { models: result.models ?? [] };
+  return { url, key: storageKey, mimeType, modelId: model.id, transparentVerified };
 }
