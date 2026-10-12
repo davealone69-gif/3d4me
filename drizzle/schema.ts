@@ -9,7 +9,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 
-/** Core user table retained for the optional starter OAuth flow. */
+/** Unverified server-side account scaffold. The local editor does not require this table. */
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
@@ -23,8 +23,8 @@ export const users = mysqlTable("users", {
 });
 
 /**
- * A device-scoped project. Figural does not require a customer account, so an opaque token
- * stored on the creator's device scopes projects without putting a public gallery in the app.
+ * Unverified server-side project scaffold. The local editor uses AsyncStorage and does not
+ * call these routes or depend on this table for project storage.
  */
 export const characterProjects = mysqlTable(
   "character_projects",

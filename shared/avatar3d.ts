@@ -260,7 +260,7 @@ function addClothing(parent: THREE.Group, settings: CharacterSettings, outfitCol
 
 export function createAvatarModel(settings: CharacterSettings) {
   const root = new THREE.Group();
-  root.name = "Figural Editable Adult Character";
+  root.name = "3D4ME Editable Adult Character";
   const colors = effectiveAvatarColors(settings);
   const factors = bodyFactors(settings);
   const faceShape = {
@@ -335,7 +335,7 @@ export function createAvatarModel(settings: CharacterSettings) {
   const clothes = addClothing(root, settings, colors.clothing, factors);
   createHair(root, settings, colors.hair);
   root.scale.y = settings.bodyHeight;
-  root.userData.figural = {
+  const modelCapabilities = {
     meshEditableBySettings: [
       "bodyHeight", "bodyBuild", "shoulderWidth", "chestWidth", "waistWidth", "hipWidth", "armLength", "legLength",
       "faceShape", "faceWidth", "jawWidth", "eyeSize", "eyeSpacing", "noseSize", "skinHex", "hairStyle", "hairLength",
@@ -344,6 +344,9 @@ export function createAvatarModel(settings: CharacterSettings) {
     materials: ["skin", "hair", "eyes", "fabric", "metal-trim"],
     contentMode: settings.adultMode ? "adult-opt-in" : "standard",
   };
+  // Keep the historical userData.figural key for GLB consumers of older exports.
+  root.userData.figural = modelCapabilities;
+  root.userData["3d4me"] = modelCapabilities;
   // Keep the surface handles available for editor-specific finish tuning without flattening meshes.
   root.userData.materialNames = [skin.name || "skin", hair.name || "hair", clothes.cloth.name || "fabric", clothes.trim.name || "trim"];
   return root;

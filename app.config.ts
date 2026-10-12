@@ -25,12 +25,15 @@ const bundleId =
 // e.g., "space.manus.my.app.t20240115103045" -> "manus20240115103045"
 const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 const schemeFromBundleId = `manus${timestamp}`;
+// Keep the old scheme for existing links and OAuth redirects. A custom URI scheme
+// cannot begin with a digit, so the branded alias is `threed4me://`, not `3d4me://`.
+const deepLinkSchemes = [schemeFromBundleId, "threed4me"];
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "Figural Character Studio",
-  appSlug: "figural",
-  scheme: schemeFromBundleId,
+  appName: "3D4ME",
+  appSlug: "3d4me",
+  scheme: deepLinkSchemes,
   iosBundleId: bundleId,
   androidPackage: bundleId,
 };
@@ -57,10 +60,10 @@ const publicRuntime = {
 };
 
 const config: ExpoConfig & { logoUrl: string } = {
-  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519664015925998/GWuoymaMPyjGXmcL.png",
+  logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519664015925998/LCSnQKJoSeckqLpg.png",
   name: env.appName,
   slug: env.appSlug,
-  version: "1.0.0",
+  version: "1.0.1",
   extra: publicRuntime,
   orientation: "portrait",
   icon: "./assets/images/icon.png",
@@ -69,6 +72,7 @@ const config: ExpoConfig & { logoUrl: string } = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
+    buildNumber: "2",
     "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -82,20 +86,19 @@ const config: ExpoConfig & { logoUrl: string } = {
     },
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
+    versionCode: 2,
     permissions: ["POST_NOTIFICATIONS"],
-    intentFilters: [
-      {
+    intentFilters: env.scheme.map((scheme) => ({
         action: "VIEW",
         autoVerify: true,
         data: [
           {
-            scheme: env.scheme,
+            scheme,
             host: "*",
           },
         ],
         category: ["BROWSABLE", "DEFAULT"],
-      },
-    ],
+      })),
   },
   web: {
     bundler: "metro",
