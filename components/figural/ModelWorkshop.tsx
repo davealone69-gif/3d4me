@@ -261,7 +261,7 @@ export function ModelWorkshop({
       const currentProjects = saveCurrentDraft();
       await writeLocalProjects(currentProjects);
       const json = createLocalLibraryBackup(currentProjects);
-      const fileName = `figural-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      const fileName = `3d4me-backup-${new Date().toISOString().slice(0, 10)}.json`;
       if (Platform.OS === "web") {
         saveWebFile(new Blob([json], { type: "application/json" }), fileName);
       } else {
@@ -272,8 +272,8 @@ export function ModelWorkshop({
         const uri = `${folder}${fileName}`;
         await FileSystem.writeAsStringAsync(uri, json, { encoding: FileSystem.EncodingType.UTF8 });
         const available = await Sharing.isAvailableAsync();
-        if (available) await Sharing.shareAsync(uri, { mimeType: "application/json", dialogTitle: "Save Figural project backup" });
-        else Alert.alert("Backup saved", `Your project library backup is stored in Figural/Backups/${fileName} inside this app.`);
+        if (available) await Sharing.shareAsync(uri, { mimeType: "application/json", dialogTitle: "Save 3D4ME project backup" });
+        else Alert.alert("Backup saved", `Your backup is stored in the existing Figural/Backups compatibility folder as ${fileName}.`);
       }
       if (Platform.OS === "web") Alert.alert("Backup downloaded", fileName);
     } catch (error) {
@@ -306,7 +306,7 @@ export function ModelWorkshop({
       await writeLocalProjects(next);
       Alert.alert("Backup recovered", `${restoredCopies.length} project(s) merged. Existing projects were kept; adult mode remains off until explicitly re-enabled.`);
     } catch (error) {
-      Alert.alert("Restore failed", error instanceof Error ? error.message : "This is not a valid Figural project backup.");
+      Alert.alert("Restore failed", error instanceof Error ? error.message : "This is not a valid 3D4ME backup. Existing Figural backups remain supported.");
     } finally {
       setBusy(null);
     }
@@ -316,7 +316,7 @@ export function ModelWorkshop({
     setBusy("glb");
     try {
       const glb = await exportAvatarGlb(settings);
-      const fileName = `${projectName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "figural-character"}.glb`;
+      const fileName = `${projectName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "3d4me-character"}.glb`;
       if (Platform.OS === "web") {
         saveWebFile(new Blob([glb], { type: "model/gltf-binary" }), fileName);
       } else {
@@ -326,8 +326,8 @@ export function ModelWorkshop({
         await FileSystem.makeDirectoryAsync(folder, { intermediates: true });
         const uri = `${folder}${fileName}`;
         await FileSystem.writeAsStringAsync(uri, createBase64(new Uint8Array(glb)), { encoding: FileSystem.EncodingType.Base64 });
-        if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "model/gltf-binary", dialogTitle: "Export editable Figural character" });
-        else Alert.alert("GLB saved", `Your editable model is saved in the app's Figural/Models/${fileName} folder.`);
+        if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "model/gltf-binary", dialogTitle: "Export editable 3D4ME character" });
+        else Alert.alert("GLB saved", `Your model is saved in the existing Figural/Models compatibility folder as ${fileName}.`);
       }
     } catch (error) {
       Alert.alert("GLB export failed", error instanceof Error ? error.message : "No GLB was written.");
@@ -530,7 +530,7 @@ export function ModelWorkshop({
       <StudioSection eyebrow="Honest description" title="What the model is — and is not">
         <Text style={styles.privacyNote}>Actual parametric mesh assembly, not a 2D mock-up: editable body, face, hair, clothing, and PBR colour/roughness/metalness; exported as GLB. Four camera views show one shared model.</Text>
         <Text style={styles.privacyNote}>It is a procedural non-photogrammetric character. No generated skin texture maps, skeletal rig, animation, blendshapes, or motion capture are included. The local preview is a shaded 3D model, not a photorealistic human scan.</Text>
-        <Text style={styles.licence}>Runtime licences: Three.js (MIT) and expo-three (MIT). The Figural mesh-generation source is project-authored. No third-party model or human photograph asset is bundled.</Text>
+        <Text style={styles.licence}>Runtime licences: Three.js (MIT) and expo-three (MIT). The 3D4ME mesh-generation source is project-authored. No third-party model or human photograph asset is bundled.</Text>
       </StudioSection>
 
       <Modal visible={showAdultGate} transparent animationType="slide" onRequestClose={() => setShowAdultGate(false)}>

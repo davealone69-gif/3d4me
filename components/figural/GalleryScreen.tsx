@@ -20,7 +20,7 @@ function shareImage(uri: string, fileName: string) {
     anchor.remove();
     return;
   }
-  void Sharing.shareAsync(uri, { mimeType: "image/png", dialogTitle: "Share saved Figural viewport image" }).catch((error) => {
+  void Sharing.shareAsync(uri, { mimeType: "image/png", dialogTitle: "Share saved 3D4ME viewport image" }).catch((error) => {
     Alert.alert("Share unavailable", error instanceof Error ? error.message : "Try again.");
   });
 }

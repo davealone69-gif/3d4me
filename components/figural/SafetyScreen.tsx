@@ -10,7 +10,7 @@ export function SafetyScreen() {
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
-          <Text style={styles.kicker}>FIGURAL STANDARD</Text>
+          <Text style={styles.kicker}>3D4ME STANDARD</Text>
           <Text style={styles.title}>Clear boundaries. Clear capability.</Text>
           <Text style={styles.summary}>Adult-content settings are opt-in, with age-and-use acknowledgements. The default local character generator is non-explicit and does not upload references.</Text>
         </View>
@@ -27,7 +27,12 @@ export function SafetyScreen() {
 
         <StudioSection eyebrow="No hosted renderer required" title="Free local work — with honest limits">
           <Text style={styles.body}>Body/face/hair/clothing edits, four camera angles, viewport PNG captures, and GLB creation run locally. This workflow has no app credit counter, subscription, or online image-generation request. “Unlimited” means no app-imposed generation quota; real use still depends on phone performance, memory, storage, and Android permissions.</Text>
-          <Text style={styles.body}>The app no longer offers hosted AI-photo creation from this local editor. Any separate hosted model outside Figural may have its own prices and quotas; Figural cannot promise a third-party unlimited image service.</Text>
+          <Text style={styles.body}>The app no longer offers hosted AI-photo creation from this local editor. Any separate hosted model outside 3D4ME may have its own prices and quotas; 3D4ME cannot promise a third-party unlimited image service.</Text>
+        </StudioSection>
+
+        <StudioSection eyebrow="Unverified server scaffolding" title="No cloud accounts or sync">
+          <Text style={styles.body}>The source repository contains server routers, database code and a Drizzle schema, but these are not a verified cloud service. Authentication is incomplete and the logout test is intentionally skipped. The local editor saves to this device and does not use the server for accounts or project sync.</Text>
+          <Text style={styles.body}>The configured Drizzle output is the project&apos;s drizzle/ root; the separate drizzle/migrations/ directory is only a placeholder. No end-to-end cloud migration, real authentication/authorization, or integration test has been established. Do not rely on or activate cloud accounts/sync until those items are completed and tested.</Text>
         </StudioSection>
 
         <StudioSection eyebrow="What exports contain" title="3D does not mean fully rigged">

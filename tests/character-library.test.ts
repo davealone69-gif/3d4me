@@ -46,7 +46,7 @@ describe("local character library", () => {
     expect(backup).not.toContain("reference-image-data");
   });
 
-  it("rejects an unrelated or corrupt backup rather than silently treating it as a Figural file", () => {
+  it("rejects an unrelated or corrupt backup rather than treating it as a valid 3D4ME project backup", () => {
     expect(() => parseLocalLibraryBackup("not json")).toThrow();
     expect(() => parseLocalLibraryBackup(JSON.stringify({ format: "other", version: 1, exportedAt: "2026-10-12T00:00:00.000Z", projects: [] }))).toThrow();
     expect(() => parseLocalLibraryBackup(JSON.stringify({

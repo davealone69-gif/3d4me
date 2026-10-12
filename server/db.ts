@@ -31,7 +31,7 @@ export async function getDb() {
 
 async function databaseOrThrow() {
   const db = await getDb();
-  if (!db) throw new Error("The Figural project database is unavailable. Retry once the service is ready.");
+  if (!db) throw new Error("The 3D4ME server database scaffold is unavailable and has not been verified for cloud use.");
   return db;
 }
 
