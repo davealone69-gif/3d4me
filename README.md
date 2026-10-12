@@ -35,12 +35,16 @@ pnpm check
 pnpm lint
 pnpm test
 pnpm exec expo export --platform android --output-dir /tmp/figural-android-bundle
+pnpm exec expo prebuild --platform android
+(cd android && ./gradlew :app:assembleRelease)
 pnpm dev
 ```
 
 The editor uses `expo-gl` + `expo-three` + Three.js. In Expo GL's native runtime, run the app on an Android physical device or suitable development build; Expo's documentation warns against remote JS debugging for GL contexts. The repository's automated tests validate actual editable geometry, the four camera angles, a GLB v2 binary header, meshes, PBR material data, project autosave/recovery, and backup validation.
 
-This checkout has been Android-bundled and its TypeScript, lint, and tests have been run. A connected physical Android handset/build runner was not available in this sandbox session, so physical-device frame presentation, device file permissions, share sheets, and GPU performance still require a handset QA pass before store release.
+The native Android debug and release variants both assembled successfully. The standalone release APK embeds the JavaScript bundle and native GL libraries; its APK signature and package metadata were verified. Expo's generated release variant uses the debug keystore here: this APK is for sideload testing, **not Play Store or production distribution**. Create and configure your own protected release keystore before publishing.
+
+No emulator or physical handset was attached, so startup, GL performance, file permissions, share sheets, and restore flows still require device QA.
 
 ## Licensing and sources
 

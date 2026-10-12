@@ -1,19 +1,22 @@
 # Figural Character Studio — Current delivery status
 
-## Implemented and verified in source
+## Implemented and verified
 
-- [x] **Real procedural 3D character mesh** — Original editable Three.js meshes for body, face features, arms, hands, legs, hair strands and clothing; slider/select values feed the mesh and its named parts.
-- [x] **Four actual camera presets** — Front, side, rear, and three-quarter are camera/model rotations over the same mesh, not separately generated placeholders.
-- [x] **Character editing** — Adult age (21–80), build, height, shoulder/chest/waist/hip widths, limb lengths, face/jaw/eyes/nose, skin/hair/eye palettes, hairstyle/length/volume, garment type, fabric, and garment colour.
-- [x] **PBR and GLB output** — Real binary glTF v2 export with geometry and physically based base-colour/roughness/metalness channels; output byte/header, mesh, and material data tested.
-- [x] **On-device project persistence/recovery** — App-private local project autosave, user-generated portable JSON backup, non-destructive restore/merge, and a local PNG capture gallery.
-- [x] **Private reference image** — Local image picker used only as a temporary in-app visual guide. No upload, analysis, project persistence, or backup inclusion.
-- [x] **Optional adult settings** — Adult wardrobe choices remain off by default; session-enforced 21+ confirmation and responsible fictional-adult attestations gate activation.
-- [x] **Transparent capability and licensing copy** — Three.js/expo-three MIT sources are disclosed. The current procedural model is explicitly not called a photoreal scan and has no generated texture maps, rig, blendshapes, animation, or motion capture.
-- [x] **No user app paywall on the local workflow** — Model editing, GLB generation, and viewport captures do not call hosted image generation. Generation has no app credit quota; device performance/storage remain natural limits.
-- [x] **Automated QA** — `pnpm check`, `pnpm lint`, `pnpm test`, and Expo Android bundle export pass. 32 automated tests across geometry, GLB structure/materials, local persistence, recovery, backups, and CORS passed; one auth logout test is intentionally skipped by the existing project test.
+- [x] **Real procedural 3D character mesh** — Editable Three.js geometry for body, face features, limbs, hands, hair and clothing. Editor values change the actual mesh and its named parts.
+- [x] **Four actual views** — Front, side, rear and three-quarter are camera/model orientations over one shared character mesh.
+- [x] **Character editor** — Adult age (21–80), body build and proportions, face/jaw/eyes/nose, skin/hair/eye palettes, hairstyle/length/volume, garment style, material and colour.
+- [x] **PBR and GLB** — Binary glTF v2 export with geometry and physically based base-colour, roughness and metalness. A live preview export was parsed and verified: 90 meshes, 9 materials.
+- [x] **Local gallery and recovery** — Private-device autosave, user-exportable JSON backups, non-destructive restore/merge, and locally saved viewport PNGs. Reference photos are local guides only and are not uploaded, analyzed, persisted or backed up.
+- [x] **Optional adult settings** — Adult wardrobe choices are off by default; session-enforced 21+ confirmation and fictional-adult attestations gate activation.
+- [x] **Honest service and model terms** — Local editing, GLB export and viewport captures have no hosted image calls or app credit/paywall meter. There is no promise of unlimited third-party image generation; performance and storage are bounded by the device.
+- [x] **Automated QA** — TypeScript check, lint, tests, Expo Android bundle export, and Android debug/release assembly completed. 32 automated tests passed; one existing logout test is intentionally skipped.
+- [x] **Native standalone Android APK** — The 67 MB release-variant APK includes the JavaScript bundle and Expo GL/React Native libraries for ARM64 and ARMv7; its package metadata and v2 signature were verified. The generated release uses Android's debug certificate, so this is for testing/sideloading, not production store signing.
 
-## Explicit remaining release-validation boundary
+## Requires a physical Android device before product/store release
 
-- [ ] **Physical Android device QA** — The sandbox had no connected handset or native Android runtime. Confirm live GL frame rendering, touch orbit/slider feel, PNG/GLB sharing and document-picker restore on a physical Android device before store release. The Android JavaScript bundle builds, but that is not a signed APK or a physical-device result.
-- [ ] **Not included by design** — Photoreal human/skin texture generation, scan assets, skeleton/face rig, animation and motion capture are not implemented. Do not describe the current generator as a photorealistic scan or a fully rigged 3D asset. No third-party unlimited hosted image-generation service is supplied or promised.
+- [ ] **On-device runtime QA** — No emulator or handset is connected to this sandbox. Verify startup, live GL frames, orbit and sliders, PNG/GLB sharing, and JSON backup/restore on real target devices.
+- [ ] **Production signing and store preparation** — Configure a protected release keystore and complete store-specific packaging, privacy review, and device testing before distributing publicly.
+
+## Deliberate current capability limits
+
+The generator is a real editable procedural 3D mesh, but it is **not a photoreal human scan or neural reconstruction**. Photoreal skin/fabric texture generation, purchased scan assets, skeleton/face rig, blendshapes, animation and motion capture are not implemented. No third-party unlimited hosted image service is supplied or promised.
