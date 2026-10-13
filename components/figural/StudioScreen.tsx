@@ -1,35 +1,63 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ModelWorkshop } from "./ModelWorkshop";
-import { studioColors } from "./StudioControls";
-
+/**
+ * Minimal Android launch/title screen.
+ *
+ * Keep the first route independent from the 3D renderer and editor so that
+ * native startup can be verified separately from GL/model initialization.
+ * Do not mount the editor here until title-screen launch is confirmed on-device.
+ */
 export function StudioScreen() {
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.hero}>
-          <View style={styles.mark}><Text style={styles.markText}>3D</Text></View>
-          <View style={styles.heroCopy}>
-            <Text style={styles.kicker}>3D4ME / LOCAL 3D STUDIO</Text>
-            <Text style={styles.title}>Build and keep your character.</Text>
-            <Text style={styles.summary}>Create a genuine editable 3D mesh on this device. No hosted image service, subscription, credits, or paywall are required for the model, views, or GLB export.</Text>
-          </View>
+    <SafeAreaView style={styles.safe} edges={["top", "right", "bottom", "left"]}>
+      <View style={styles.content} accessibilityRole="summary">
+        <View style={styles.mark}>
+          <Text style={styles.markText}>3D</Text>
         </View>
-        <ModelWorkshop />
-      </ScrollView>
+        <Text style={styles.title}>3D4ME</Text>
+        <Text style={styles.subtitle}>LOCAL 3D STUDIO</Text>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "#0F0C1C" },
-  content: { padding: 16, gap: 16, paddingBottom: 38 },
-  hero: { flexDirection: "row", alignItems: "flex-start", gap: 13, paddingTop: 8, paddingBottom: 2 },
-  mark: { width: 48, height: 48, borderRadius: 16, justifyContent: "center", alignItems: "center", backgroundColor: "#8D73F0", borderColor: "#C5B7FF", borderWidth: 1 },
-  markText: { color: "#FFF", fontSize: 19, fontWeight: "900", letterSpacing: -1 },
-  heroCopy: { flex: 1, gap: 5 },
-  kicker: { color: studioColors.mint, fontSize: 10, fontWeight: "900", letterSpacing: 1.1 },
-  title: { color: studioColors.ink, fontSize: 27, fontWeight: "900", letterSpacing: -0.8, lineHeight: 32 },
-  summary: { color: studioColors.muted, fontSize: 13, lineHeight: 19 },
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
+  mark: {
+    width: 88,
+    height: 88,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#8D73F0",
+    borderColor: "#C5B7FF",
+    borderWidth: 1,
+    marginBottom: 22,
+  },
+  markText: {
+    color: "#FFFFFF",
+    fontSize: 32,
+    fontWeight: "900",
+    letterSpacing: -1.5,
+  },
+  title: {
+    color: "#FFFFFF",
+    fontSize: 32,
+    fontWeight: "900",
+    letterSpacing: 1.5,
+  },
+  subtitle: {
+    color: "#B7A3FF",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 3,
+    marginTop: 10,
+  },
 });
