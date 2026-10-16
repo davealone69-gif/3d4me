@@ -63,7 +63,7 @@ const config: ExpoConfig & { logoUrl: string } = {
   logoUrl: "https://files.manuscdn.com/user_upload_by_module/session_file/310519664015925998/LCSnQKJoSeckqLpg.png",
   name: env.appName,
   slug: env.appSlug,
-  version: "1.0.1",
+  version: "1.0.2",
   extra: publicRuntime,
   orientation: "portrait",
   icon: "./assets/images/icon.png",
@@ -86,7 +86,7 @@ const config: ExpoConfig & { logoUrl: string } = {
     },
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
-    versionCode: 2,
+    versionCode: 3,
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: env.scheme.map((scheme) => ({
         action: "VIEW",

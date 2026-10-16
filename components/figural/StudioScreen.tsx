@@ -51,7 +51,7 @@ export function StudioScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Open 3D character studio"
-          onPress={() => setStudioOpen(true)}
+          onPress={() => { console.log("[3D4ME] Open Studio pressed"); setStudioOpen(true); }}
           style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]}
         >
           <Text style={styles.startButtonText}>Open Studio</Text>
