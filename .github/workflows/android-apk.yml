@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-apk-${{ github.ref }}
@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -63,13 +65,64 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon --stacktrace :app:assembleDebug :app:assembleRelease
 
-      - name: Upload APKs
+      - name: Verify and stage directly installable APKs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p direct-apks
+          shopt -s nullglob
+          debug_apks=(android/app/build/outputs/apk/debug/*.apk)
+          release_apks=(android/app/build/outputs/apk/release/*.apk)
+          if (( ${#debug_apks[@]} == 0 )); then
+            echo "::error::Gradle produced no debug APK"
+            exit 1
+          fi
+          apksigner="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -type f -name apksigner 2>/dev/null | sort -V | tail -n 1)"
+          if [[ -z "$apksigner" ]]; then
+            echo "::error::Android apksigner tool not found"
+            exit 1
+          fi
+          "$apksigner" verify --verbose "${debug_apks[0]}"
+          cp "${debug_apks[0]}" direct-apks/3d4me-debug.apk
+          if (( ${#release_apks[@]} > 0 )); then
+            if "$apksigner" verify --verbose "${release_apks[0]}"; then
+              cp "${release_apks[0]}" direct-apks/3d4me-release.apk
+            else
+              echo "::warning::Release APK is not signed/verified; publishing only the verified debug APK."
+            fi
+          fi
+          echo "Verified APK files for direct download:"
+          ls -lh direct-apks
+
+      - name: Upload APK backup artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: 3d4me-android-apks-${{ github.run_number }}
-          path: |
-            android/app/build/outputs/apk/debug/*.apk
-            android/app/build/outputs/apk/release/*.apk
+          path: direct-apks/*.apk
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Publish direct APK downloads
+        if: success() && github.event_name != 'pull_request'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apks=(direct-apks/*.apk)
+          if (( ${#apks[@]} == 0 )); then
+            echo "::error::No verified APKs available to publish"
+            exit 1
+          fi
+          git tag -f android-latest "$GITHUB_SHA"
+          git push origin refs/tags/android-latest --force
+          notes="Automated Android build from commit ${GITHUB_SHA}. Download the .apk asset directly; no ZIP extraction is needed. The debug APK is signed and signature-verified by CI. This build has not been verified on a physical Android device."
+          if gh release view android-latest >/dev/null 2>&1; then
+            gh release upload android-latest "${apks[@]}" --clobber
+            gh release edit android-latest --title "3D4ME Android APKs (latest build)" --notes "$notes"
+          else
+            gh release create android-latest "${apks[@]}" --title "3D4ME Android APKs (latest build)" --notes "$notes" --target "$GITHUB_SHA"
+          fi
