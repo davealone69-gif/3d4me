@@ -1,15 +1,39 @@
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { ModelWorkshop } from "./ModelWorkshop";
+type WorkshopComponent = ComponentType;
 
 /**
- * Keep native startup independent from the GL renderer. The title screen is
- * rendered first; the editor is mounted only after the user explicitly opens it.
+ * Keep the title screen independent of the 3D editor and its native GL imports.
+ * Load the editor only after an explicit tap and show a visible loading/error
+ * state so a failed import cannot look like a dead button.
  */
 export function StudioScreen() {
   const [studioOpen, setStudioOpen] = useState(false);
+  const [Workshop, setWorkshop] = useState<WorkshopComponent | null>(null);
+  const [opening, setOpening] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const openStudio = () => {
+    setStudioOpen(true);
+    setOpening(true);
+    setLoadError(null);
+
+    void import("./ModelWorkshop")
+      .then((module) => {
+        setWorkshop(() => module.ModelWorkshop);
+      })
+      .catch((error: unknown) => {
+        console.error("[3D4ME] Failed to load ModelWorkshop", error);
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : "The editor could not be loaded on this device.",
+        );
+      })
+      .finally(() => setOpening(false));
+  };
 
   if (studioOpen) {
     return (
@@ -31,7 +55,30 @@ export function StudioScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator
         >
-          <ModelWorkshop />
+          {opening ? (
+            <View style={styles.statusPanel} accessibilityRole="progressbar">
+              <Text style={styles.statusTitle}>Opening 3D Studio…</Text>
+              <Text style={styles.statusText}>Loading the editor after your tap.</Text>
+            </View>
+          ) : loadError ? (
+            <View style={styles.statusPanel} accessibilityRole="alert">
+              <Text style={styles.errorTitle}>The editor could not start</Text>
+              <Text style={styles.statusText}>{loadError}</Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={openStudio}
+                style={styles.startButton}
+              >
+                <Text style={styles.startButtonText}>Try loading again</Text>
+              </Pressable>
+            </View>
+          ) : Workshop ? (
+            <Workshop />
+          ) : (
+            <View style={styles.statusPanel}>
+              <Text style={styles.statusTitle}>Preparing 3D Studio…</Text>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     );
@@ -51,7 +98,7 @@ export function StudioScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Open 3D character studio"
-          onPress={() => { console.log("[3D4ME] Open Studio pressed"); setStudioOpen(true); }}
+          onPress={openStudio}
           style={({ pressed }) => [styles.startButton, pressed && styles.startButtonPressed]}
         >
           <Text style={styles.startButtonText}>Open Studio</Text>
@@ -143,4 +190,17 @@ const styles = StyleSheet.create({
   backButtonText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
   editorScroll: { flex: 1 },
   editorContent: { padding: 16, paddingBottom: 36, gap: 16 },
+  statusPanel: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#42385F",
+    backgroundColor: "#17142A",
+    gap: 10,
+  },
+  statusTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "900", textAlign: "center" },
+  errorTitle: { color: "#FFC4B8", fontSize: 18, fontWeight: "900", textAlign: "center" },
+  statusText: { color: "#C4BED8", fontSize: 13, lineHeight: 19, textAlign: "center" },
 });
