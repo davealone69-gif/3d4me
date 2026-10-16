@@ -16,7 +16,7 @@ describe("3D4ME identity and update compatibility", () => {
     expect(appConfig.slug).toBe("3d4me");
     expect(appConfig.scheme).toEqual(["manus087663238228075", "threed4me"]);
     expect(appConfig.android?.package).toBe("space.manus.figural.t087663238228075");
-    expect(appConfig.android?.versionCode).toBe(2);
+    expect(appConfig.android?.versionCode).toBe(3);
     expect(appConfig.ios?.bundleIdentifier).toBe("space.manus.figural.t087663238228075");
     expect(appConfig.ios?.buildNumber).toBe("2");
   });
