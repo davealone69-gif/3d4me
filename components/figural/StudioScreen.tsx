@@ -1,4 +1,4 @@
-import { useState, type ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentType } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -6,16 +6,17 @@ type WorkshopComponent = ComponentType;
 
 /**
  * Keep the title screen independent of the 3D editor and its native GL imports.
- * Load the editor only after an explicit tap and show a visible loading/error
- * state so a failed import cannot look like a dead button.
+ * Automatically load the editor on launch, while keeping GL imports deferred
+ * until the startup screen is mounted. Show a visible recovery state on failure.
  */
 export function StudioScreen() {
-  const [studioOpen, setStudioOpen] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(true);
   const [Workshop, setWorkshop] = useState<WorkshopComponent | null>(null);
-  const [opening, setOpening] = useState(false);
+  const [opening, setOpening] = useState(true);
+  const loadStarted = useRef(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const openStudio = () => {
+  const openStudio = useCallback(() => {
     setStudioOpen(true);
     setOpening(true);
     setLoadError(null);
@@ -33,7 +34,13 @@ export function StudioScreen() {
         );
       })
       .finally(() => setOpening(false));
-  };
+  }, []);
+
+  useEffect(() => {
+    if (loadStarted.current) return;
+    loadStarted.current = true;
+    openStudio();
+  }, [openStudio]);
 
   if (studioOpen) {
     return (
@@ -58,7 +65,7 @@ export function StudioScreen() {
           {opening ? (
             <View style={styles.statusPanel} accessibilityRole="progressbar">
               <Text style={styles.statusTitle}>Opening 3D Studio…</Text>
-              <Text style={styles.statusText}>Loading the editor after your tap.</Text>
+              <Text style={styles.statusText}>Loading the editor automatically at startup.</Text>
             </View>
           ) : loadError ? (
             <View style={styles.statusPanel} accessibilityRole="alert">
